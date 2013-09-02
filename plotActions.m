@@ -1,10 +1,11 @@
 function res=plotActions(master)
-actions=selectLogTyp(master,':action');
-firstPlanStart=str2double(master.children(1).param{2})
+actions=filterStateAction(master);
+
+firstPlanStart=str2double(master.children(1).param{2});
 
 j=0;
 for i=1:length(actions)
-    a=actions{i};
+    a=actions(i);
     ts=str2num(a.param{2});
     a.status=a.children.param{1};
     if (strcmp(a.status,'IN_PROGRESS'))
@@ -47,6 +48,14 @@ for i=1:length(res)
     stop=res(i).stop-offset;
     
     rectangle('Position', [start -0.5 stop-start 1], 'Curvature',[0.1],'FaceColor',colours(actionsMap(res(i).action),:));
-    text((start+stop)/2,0,res(i).action, 'Rotation',90,'HorizontalAlignment','center', 'Interpreter','none','FontName','Tahoma');
+    if (strfind(res(i).action,'move')==1)
+        actionLabel(start,stop,['move to ',num2str(placeid2num(res(i).params{2}))]);
+    else
+        actionLabel(start,stop,res(i).action);
+    end;
     %text((start+stop)/2,0,res(i).params, 'Rotation',90,'HorizontalAlignment','center', 'Interpreter','none','FontName','Tahoma','FontSize',6);
 end;
+
+
+function actionLabel(start,stop,t)
+text((start+stop)/2,0,t, 'Rotation',90,'HorizontalAlignment','center', 'Interpreter','none','FontName','Tahoma');
