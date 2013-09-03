@@ -1,6 +1,8 @@
-function [roomCats,placeRoom,placeCat]=parseState(state)
+function [roomCats,placeRoom,placeCat,robotPose,placeStatus]=parseState(state)
     roomCats=parseRoomCats(state);
     placeRoom=parsePlaceRoom(state);
+    robotPose=parseRobotPose(state);
+    placeStatus=parsePlaceStatus(state);
     fn=fieldnames(placeRoom);
     for (i=1:length(fn))
         %placeCat.(fn{i})=roomCats.rooms.(placeRoom.(fn{i}));
@@ -14,6 +16,26 @@ function placeRoom=parsePlaceRoom(state);
         placeRoom.(ir(i).children(1).param{2})=ir(i).param{2};
     end;
     
+
+function robotPose=parseRobotPose(state);
+    as=selectLogTyp(state,'define.:init.=');
+    rp=filterLogTyp(as,'is-in');
+    robotPose=rp(1).param{2};
+
+function placeStatus=parsePlaceStatus(state);
+    as=selectLogTyp(state,'define.:init.=');
+    rp=filterLogTyp(as,'placestatus');
+    placeStatus=zeros(1,100);
+    for i=1:length(rp);
+        status=rp(i).param{2};
+        place=rp(i).children(1).param{2};
+        placeID=placeid2num(place);
+        if (strcmp(status,'trueplace'))
+            placeStatus(placeID+1)=1;
+        else
+            placeStatus(placeID+1)=0;
+        end;
+    end;
 
 
     

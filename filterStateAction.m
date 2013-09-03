@@ -22,9 +22,15 @@ a_time(:,1)=a_time(:,1)-mintime;
 
 
 for i=1:length(actions)
-    d=abs(s_time(:,1)-a_time(i,1));
-    [m,ix]=min(d);
-    actions(i).state=states(s_time(ix,2));
+    d=(s_time(:,1)-a_time(i,1));
+    dpre=d;
+    dpost=d;
+    dpre(find(d>0))=inf;
+    dpost(find(d<0))=inf;
+    [m,ix_pre]=min(abs(dpre));
+    [m,ix_post]=min(abs(dpost));
+    actions(i).state_pre=states(s_time(ix_pre,2));
+    actions(i).state_post=states(s_time(ix_post,2));
 end;
 
 
