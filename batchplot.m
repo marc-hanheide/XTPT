@@ -1,3 +1,4 @@
+function batchplot(logs)
 for (i=1:length(logs))
     figure(i);
     set(gcf,'Name',logs(i).file.name)

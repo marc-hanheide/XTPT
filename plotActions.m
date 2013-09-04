@@ -1,49 +1,61 @@
 function res=plotActions(master)
-actions=filterStateAction(master);
 
 firstPlanStart=str2double(master.children(1).param{2});
+res=augmentActions(master);
 
-
-
-j=0;
-for i=1:length(actions)
-    a=actions(i);
-    ts=str2num(a.param{2});
-    a.status=a.children.param{1};
-    if (strcmp(a.status,'IN_PROGRESS'))
-        j=j+1;
-        start=ts;
-        state_pre=a.state_pre;
-    else
-        a.action=getActionName(a.children.children.param{1});
-        a.params=a.children.children.param(2:end);
-        a.start=start;
-        a.stop=ts;
-        a.state_pre=state_pre;
-        [d1,d2,d3,d4,a.placeStatus]=parseState(a.state_pre);
-        [a.roomCats,a.placeRoom,a.placeCat,a.robotPose]=parseState(a.state_post);
-        res(j)=a;
-        if (strcmp(a.action,'move'))
-            destpid=placeid2num(res(j).params{2});
-            deststatus=res(j).placeStatus(destpid+1);
-            if (deststatus==0)
-                res(j).action='explore';
-            end;
-        end;
-
+robotPoses=zeros(1,length(res));
+for i=1:length(res)
+    robotPoses(i)=placeid2num(res(i).robotPose);
+    try
+        robotCat(i,:)=res(i).placeCat(robotPoses(i)+1,:);
+    catch
+        robotCat(i,:)=[0 0 0];
     end;
 end;
+    
+
 
 offset=min([firstPlanStart res.start]);
 
-cla
-set(gca,'YTick',[]);
-set(gca,'YLim', [-1.6 1.6]);
-set(gca,'DataAspectRatio',[250 1 1.66667]);
+
 set(gcf,'PaperPosition',[2.59447 8.91145 15.7924 15.8443]);
-set(gcf,'Position',[0 258 1200 420]),
+set(gcf,'Position',[0 600 1200 420]),
 set(gcf,'PaperPositionMode','auto'); 
+
+cla
+hold on;
+
+e=entropyCat(res);
+et=([res.start]+([res.stop]-[res.start])/2)-offset
+
+
+subplot(2,1,1);
+cla
+bar(et,robotCat)
+plot(et,e);
+legend(res(end).roomCats.labels)
+set(gca,'XTick',[]);
+%set(gca,'XTickLabel',round(et));
+set(gca,'YTick',[0 1]);
+set(gca,'YGrid','on');
+set(gca,'XGrid','on');
+set(gca,'YLim', [0 1]);
+%set(gca,'DataAspectRatio',[250 1 1.66667]);
+%set(get(gca,'XLabel'),'String','Time in sec.');
+
+
+
+subplot(2,1,2);
+cla
+set(gca,'XTick',et);
+set(gca,'XTickLabel',round(et));
+set(gca,'YTick',[]);
+set(gca,'YGrid','off');
+set(gca,'XGrid','on');
+set(gca,'YLim', [-1.6 0]);
+%set(gca,'DataAspectRatio',[250 1 1.66667]);
 set(get(gca,'XLabel'),'String','Time in sec.');
+
 %print -depsc 'out.eps'
 
 actionsMap = containers.Map;
@@ -62,6 +74,8 @@ colours=lines(actionsMap.length);
 
 
 
+subplot(2,1,2);
+
 handles=[];
 for i=1:length(res)
     start=res(i).start-offset;
@@ -72,35 +86,24 @@ for i=1:length(res)
         destpid=placeid2num(res(i).params{2});
         deststatus=res(i).placeStatus(destpid+1);
         robotPose=placeid2num(res(i).robotPose);
-        handles(end+1)=rectangle('Position', [start -0.5 stop-start 2], 'Curvature',[0.1],'FaceColor',colours(actionsMap('move'),:));
+        handles(end+1)=rectangle('Position', [start -0.5 stop-start 0.2], 'Curvature',[0.5],'FaceColor',colours(actionsMap('move'),:));
         rcol=res(i).placeCat(startpid+1,:);
         rectangle('Position', [start -1.5 stop-start 0.5], 'Curvature',[0.1],'FaceColor',rcol);
-        actionLabel(start,stop,['move from ',num2str(startpid), ' to ',num2str(destpid),' ', num2str(deststatus), ' (ends at ',num2str(robotPose),')']);
+        %actionLabel(start,stop,['move from ',num2str(startpid), ' to ',num2str(destpid),' ', num2str(deststatus), ' (ends at ',num2str(robotPose),')']);
     else
-        handles(end+1)=rectangle('Position', [start -0.5 stop-start 2], 'Curvature',[0.1],'FaceColor',colours(actionsMap(res(i).action),:));
+        handles(end+1)=rectangle('Position', [start -0.5 stop-start 0.2], 'Curvature',[0.5],'FaceColor',colours(actionsMap(res(i).action),:));
 
-        actionLabel(start,stop,res(i).action);
+        %actionLabel(start,stop,res(i).action);
     end;
     %text((start+stop)/2,0,res(i).params, 'Rotation',90,'HorizontalAlignment','center', 'Interpreter','none','FontName','Tahoma','FontSize',6);
 end;
-hold on;
+
 rect_legend(colours,legend_text);
 
 
 
 function actionLabel(start,stop,t)
 text((start+stop)/2,0.5,t, 'Rotation',90,'HorizontalAlignment','center', 'Interpreter','none','FontName','Tahoma');
-
-function name=getActionName(orig)
-name=orig;
-switch(orig)
-    case 'move_direct'
-        name='move';
-    case 'create_cones_in_room'
-        name='create-cones';
-    case 'process_conegroup'
-        name='search-in-cones';
-end;
 
 
     
