@@ -43,7 +43,13 @@ function placeStatus=parsePlaceStatus(state);
 function [roomCats]=parseRoomCats(state)
 
     roomMap = containers.Map;
-    roomInd=0;
+    roomMap('office')=1;
+    labels{1}='office';
+    roomMap('corridor')=2;
+    labels{2}='corridor';
+    roomMap('meetingroom')=3;
+    labels{3}='meetingroom';
+    roomInd=3;
 
 
     ps=selectLogTyp(state,'define.:init.probabilistic');
